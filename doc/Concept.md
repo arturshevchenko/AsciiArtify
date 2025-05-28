@@ -109,3 +109,13 @@ kubectl get services
 ---
 
 Демо: https://github.com/arturshevchenko/AsciiArtify
+
+https://argo-cd.readthedocs.io/en/stable/
+
+https://k3s.io/
+
+https://minikube.sigs.k8s.io/docs/
+
+https://kind.sigs.k8s.io/
+
+https://k3d.io/stable/
