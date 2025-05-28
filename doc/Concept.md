@@ -108,7 +108,9 @@ kubectl get services
 
 ---
 
-Демо: https://github.com/arturshevchenko/AsciiArtify
+Демо: ![Image](../demo.gif)
+
+https://github.com/arturshevchenko/AsciiArtify
 
 https://argo-cd.readthedocs.io/en/stable/
 
