@@ -1,166 +1,226 @@
-## Introduction
+# Concept: Порівняльний аналіз інструментів локального розгортання Kubernetes для AsciiArtify
 
-To ensure reliable development, testing, and scaling of the AsciiArtify platform, the team is considering three popular tools for running **local Kubernetes clusters**. These tools allow developers to simulate production-like environments on their local machines before deploying to the cloud.
+#### 🎥 Демо (асciinema)
 
-### Minikube
-Minikube is a widely-used tool that enables running a **single-node Kubernetes cluster locally** on a personal computer. It supports multiple virtualization backends such as VirtualBox, KVM, HyperKit, Docker, and even Podman (experimental). Minikube is particularly suited for learning Kubernetes, prototyping, and basic application testing, as it includes useful features like a built-in Kubernetes Dashboard.
+[🎥 Переглянути демо](https://asciinema.org/a/0Zrw7IOMO9FA7c1dnFZqkAJVZ)
 
-### Kind (Kubernetes IN Docker)
-Kind allows developers to create **multi-node Kubernetes clusters** inside Docker containers. It is popular in the Kubernetes community, especially for **continuous integration (CI) pipelines** and **automated testing**. Kind’s ability to quickly spin up clusters makes it ideal for development workflows where rapid setup and teardown are essential. However, it lacks some built-in tooling like a graphical dashboard.
+## Вступ
 
-### K3s / k3d (Lightweight Kubernetes in Docker)
-K3s is a **lightweight Kubernetes distribution** designed for resource-constrained environments such as edge computing, IoT, and local development. K3d builds on K3s by allowing users to run **K3s clusters in Docker containers**. K3d is well-suited for **multi-node setups**, **microservices architectures**, and **Proof-of-Concept (PoC)** projects where fast provisioning and low resource consumption are priorities.
+Для ефективної локальної розробки та тестування програмного продукту AsciiArtify, який буде масштабуватись за допомогою Kubernetes, було розглянуто три основні інструменти для розгортання Kubernetes-кластерів в локальному середовищі:
 
-## Features Comparison
-
-| **Feature**                                  | **Minikube**                                                                 | **Kind (Kubernetes IN Docker)**                                                         | **K3s / k3d (Lightweight Kubernetes in Docker)**                                            |
-|----------------------------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| **Supported Operating Systems**              | Linux, macOS, Windows                                                        | Linux, macOS, Windows                                                                  | Linux, macOS, Windows (via WSL2)                                                            |
-| **Supported Architectures**                  | x86_64, ARM64, ARMv7, ppc64, s390x                                           | x86_64, ARM64                                                                          | x86_64, ARM64, ARMhf                                                                        |
-| **Cluster Type**                             | Single-node by default, limited multi-node support (experimental)            | Fully supports multi-node clusters inside Docker containers                            | Fully supports multi-node clusters using lightweight K3s                                    |
-| **High Availability Support**                | No                                                                           | Yes                                                                                    | Yes                                                                                         |
-| **Provisioning Speed**                       | Moderate                                                                    | Fast                                                                                   | Very fast                                                                                   |
-| **Resource Consumption (CPU & Memory Idle)** | Higher (approx. 680 MiB memory)                                              | Medium (approx. 580 MiB memory)                                                         | Low (approx. 500 MiB memory)                                                                |
-| **Automation & CI/CD Integration**           | Limited, slower for CI/CD pipelines                                          | Widely used in Kubernetes CI/CD pipelines                                              | Suitable for CI/CD, especially for distributed services PoC                                |
-| **Built-in Monitoring / GUI**                | Yes (Kubernetes Dashboard included)                                         | No built-in GUI, manual setup required                                                  | No built-in GUI, manual setup required                                                      |
-| **Helm Chart Support**                       | Supported via add-ons                                                        | Requires manual installation                                                           | Built-in Helm support                                                                       |
-| **Ingress Controller Support**               | Supported via add-ons                                                        | Requires manual installation                                                           | Built-in Traefik Ingress Controller                                                         |
-| **LoadBalancer Support**                     | Supported via add-ons                                                        | Requires manual installation                                                           | Built-in LoadBalancer support                                                               |
-| **GPU Support**                              | Yes                                                                          | No                                                                                     | Yes                                                                                         |
-| **Podman Support**                           | Partial                                                                     | Experimental                                                                          | Experimental                                                                               |
-| **Documentation and Community Support**     | Strong CNCF-backed community, well-documented                                | Active community, widely adopted in Kubernetes ecosystem                              | Active community backed by Rancher, focused on edge and lightweight deployments            |
-| **Ease of Use**                              | Very easy to set up with built-in tools                                      | Easy to set up, requires Docker knowledge                                              | Easy to set up, focuses on fast and lightweight deployments                                |
-| **Use Case Fit**                             | Ideal for learning, personal development, and small-scale testing            | Best for CI/CD and fast local Kubernetes testing                                       | Best for microservices, distributed PoC environments, and multi-node lightweight clusters  |
+* **Minikube** — стандартний інструмент для запуску локального Kubernetes-кластеру.
+* **Kind** (Kubernetes IN Docker) — створює кластери всередині Docker-контейнерів.
+* **K3d** — дозволяє запускати легкий кластер на базі k3s у Docker.
 
 
-## Advantages and Disadvantages
+## Характеристики
+
+| Характеристика                  | Minikube                       | Kind                        | K3d (на базі k3s)           |
+| ------------------------------- | ------------------------------ | --------------------------- | --------------------------- |
+| Підтримка ОС                    | Linux, macOS, Windows          | Linux, macOS, Windows       | Linux, macOS, Windows       |
+| Архітектура                     | x86\_64, ARM (обмежено)        | x86\_64, ARM                | x86\_64, ARM                |
+| Вимоги до Docker                | Опціонально (підтримує Podman) | Обов'язковий Docker         | Обов'язковий Docker         |
+| Підтримка Podman                | Так (бета, нестабільно)        | Ні                          | Ні                          |
+| Швидкість запуску               | Помірна                        | Висока                      | Висока                      |
+| Інтеграція з Helm               | Так                            | Так                         | Так                         |
+| Автоматизація CI/CD             | Так                            | Так                         | Так                         |
+| Вбудовані додатки (Ingress, UI) | Так (addons)                   | Ні                          | Частково                    |
+| Моніторинг                      | Через addons                   | Не входить за замовчуванням | Не входить за замовчуванням |
+| Простота конфігурації           | Висока                         | Середня                     | Висока                      |
+| Виробниче застосування          | Ні                             | Ні                          | Можливо (edge та IoT)       |
+
+## Переваги та недоліки
 
 ### Minikube
 
-**Advantages:**
-- Easy to install and get started.
-- Provides a built-in Kubernetes Dashboard for graphical cluster management.
-- Supports various virtualization backends (VirtualBox, KVM, HyperKit, Docker, Podman).
-- Backed by CNCF with strong community support and documentation.
+**Переваги:**
 
-**Disadvantages:**
-- Default single-node setup limits realistic multi-node testing.
-- Slower startup times compared to Kind and K3d.
-- Higher resource usage on local machines.
-- Limited scalability and high availability support.
-- Less suitable for automated CI/CD pipelines due to performance limitations.
+* Найбільш поширений і добре задокументований.
+* Підтримує UI, addons (наприклад, dashboard, ingress).
+* Можна використовувати без Docker (через Podman, VirtualBox).
+
+**Недоліки:**
+
+* Повільніший запуск у порівнянні з kind та k3d.
+* Важчий за ресурсами.
+* Не ідеальний для CI/CD.
+
+### Kind
+
+**Переваги:**
+
+* Дуже швидкий запуск і знищення кластеру.
+* Простий YAML для конфігурації.
+* Ідеально підходить для CI/CD.
+
+**Недоліки:**
+
+* Не підтримує Podman.
+* Немає UI/додатків за замовчуванням.
+* Менше friendly для новачків.
+
+### K3d
+
+**Переваги:**
+
+* Дуже легкий і швидкий.
+* Заснований на k3s — легкій реалізації Kubernetes.
+* Добре працює з Docker.
+* Підтримує багатонодові кластери.
+
+**Недоліки:**
+
+* Вимагає Docker.
+* Менше документації.
+* Моніторинг і UI потрібно налаштовувати вручну.
+
+## Демонстрація: k3d
+
+Рекомендований інструмент — **k3d**. Він забезпечує баланс швидкості, простоти та близькості до реального середовища розгортання. Нижче наведено приклад розгортання "Hello World" застосунку:
+
+```bash
+# Встановлення k3d
+brew install k3d
+
+# Створення кластеру
+k3d cluster create asciiartify-cluster --agents 2
+
+# Деплой nginx як Hello World
+kubectl create deployment hello --image=nginx
+kubectl expose deployment hello --type=NodePort --port=80
+
+# Перевірка доступності
+kubectl get services
+```
+
+
+## Висновки
+
+Для PoC-проєкту стартапу AsciiArtify рекомендується використовувати **k3d** з наступних причин:
+
+* Висока швидкість розгортання та легкість у використанні.
+* Підходить для розробки та тестування lightweight-кластерів.
+* Легко інтегрується в CI/CD.
+
+**Kind** доцільно використовувати у сценаріях CI або коли Docker вже інтегрований у робочий процес.
+
+**Minikube** — зручний для новачків та сценаріїв, де потрібні UI або робота без Docker, але має обмеження за ресурсами та швидкістю.
 
 ---
 
-### Kind (Kubernetes IN Docker)
-
-**Advantages:**
-- Fast and lightweight cluster provisioning using Docker containers.
-- Supports multi-node clusters and high availability.
-- Widely adopted in Kubernetes CI/CD pipelines.
-- Minimal resource overhead.
-- Well-suited for fast, disposable development and testing environments.
-
-**Disadvantages:**
-- No built-in GUI or monitoring tools (manual setup required).
-- Relies on Docker (Podman support is experimental).
-- Limited feature set compared to full Kubernetes distributions.
-- Not ideal for GPU or hardware-specific workloads.
+**Примітка:** Команді слід моніторити ситуацію з ліцензуванням Docker Desktop, а також експериментувати з підтримкою Podman у Minikube як альтернативою.
 
 ---
 
-### K3s / k3d (Lightweight Kubernetes in Docker)
+Демо: ![Image](demo.gif)
 
-**Advantages:**
-- Extremely fast cluster creation with low resource consumption.
-- Built-in support for Helm, Ingress (Traefik), and LoadBalancer.
-- Suitable for multi-node and microservices-based deployments.
-- Good fit for PoC, edge computing, and distributed services.
-- Active community support backed by Rancher.
+## Додаткові посилання
 
-**Disadvantages:**
-- No built-in GUI or dashboard (manual setup required).
-- Still relies on Docker (Podman support is experimental).
-- Slightly more complex configuration compared to Minikube for beginners.
-
-## Demo
-## Step-by-step Demo Instructions
-
-Follow the steps below to deploy a simple Nginx "Hello World" application on a local Kubernetes cluster using **k3d** and **kubectl**.
-
-### 1. Create a New Kubernetes Cluster
-
-```bash
-k3d cluster create demo-cluster
-```
-### 2. Verify Cluster Nodes
-```bash
-kubectl get nodes
-```
-### 3. Deploy the Nginx Hello WOrld Application
-```bash
-kubectl create deployment hello-world --image=nginx
-```
-### 4. Expose the Deployment as a LoadBalancer Service
-```bash
-kubectl expose deployment hello-world --port=80 --type=LoadBalancer
-```
-### 5. List the Services to Get the Service Details
-```bash
-kubectl get svc
-```
-### 6. Forword Local Port to the Service
-```bash
-kubectl port-forward svc/hello-world 8080:80
-```
-Now open your browser and go to:
-
-http://localhost:8080
-
-You should see the Nginx welcome page.
-
-
-## Demo Recording
-
-Watch the live terminal demo on Asciinema:
-
-[![Watch demo](https://asciinema.org/a/720042.svg)](https://asciinema.org/a/720042)
-
-## Conclusion and Recommendations
-
-After a detailed evaluation of Minikube, Kind, and K3d (K3s), the following conclusions and recommendations have been made for AsciiArtify’s Proof-of-Concept (PoC) environment.
-
-### Minikube
-
-Minikube is a great tool for **getting started with Kubernetes**, learning its basics, and running small, single-node clusters. It includes a **built-in dashboard**, making it ideal for beginners or simple local testing scenarios.
-
-However, Minikube’s **limited scalability**, **heavier resource consumption**, and **slower startup times** make it less suitable for multi-node microservices architecture or CI/CD automation.
-
-**Recommendation:**  
-Use Minikube for **educational purposes**, **single-node development**, or **small-scale prototypes**, but **not recommended** for distributed PoC environments.
+* [Офіційна документація Minikube](https://minikube.sigs.k8s.io/)
+* [Офіційна документація kind](https://kind.sigs.k8s.io/)
+* [Офіційна документація k3d](https://k3d.io/)
+* [Podman vs Docker](https://podman.io/)
+* [AsciiArtify GitHub репозиторій](https://github.com/smaystr/AsciiArtify)
 
 ---
 
-### Kind (Kubernetes IN Docker)
+*Всі коди та YAML-файли можна знайти у репозиторії AsciiArtify у папці `/demo`.*
 
-Kind is designed for **fast, disposable Kubernetes clusters** running entirely in Docker. It is well-suited for **CI/CD pipelines**, **automated testing**, and **multi-node simulations**. However, it lacks built-in tools like dashboards or load balancing, requiring additional setup.
+https://github.com/arturshevchenko/AsciiArtify
 
-**Recommendation:**  
-Use Kind for **CI/CD automation** and **rapid local testing** where infrastructure overhead needs to be minimal, but **less ideal for complex PoC environments** with real-world microservices architecture.
+https://argo-cd.readthedocs.io/en/stable/
 
----
+https://k3s.io/
 
-### K3d / K3s (Lightweight Kubernetes in Docker)
+https://minikube.sigs.k8s.io/docs/
 
-K3d (based on K3s) provides **fast, low-resource, multi-node Kubernetes clusters** inside Docker containers. It includes **built-in support for Helm, Ingress, and LoadBalancer**, making it ideal for **microservices**, **distributed architectures**, and **PoC deployments**.
+https://kind.sigs.k8s.io/
 
-Its balance between performance, flexibility, and ease of setup makes it the **best choice for AsciiArtify’s Proof-of-Concept**.
+https://k3d.io/stable/
 
-**Recommendation:**  
-**Recommended** for **PoC environments**, **microservices deployment**, **multi-node testing**, and **scalable local simulations**.
 
 ---
 
-##  Final Recommendation
+## Практичний гайд: Як розгорнути демо "Hello from Ascii" у кожному кластері
 
-AsciiArtify should proceed with **K3d (K3s in Docker)** as the **primary local Kubernetes solution** for developing and testing their Proof-of-Concept, ensuring realistic simulation of production environments with minimal resource overhead and maximum flexibility.
+> **Файл для розгортання:** [ascii-artify.yaml](./ascii-artify.yaml)  
+> Примітка: yaml використовує простий імейдж, який повертає відповідь `Hello from ascii`.
+
+### 1. Minikube
+
+#### Встановлення:
+```bash
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube && sudo mv minikube /usr/local/bin
+minikube start
+```
+#### Деплой:
+```bash
+kubectl apply -f ascii-artify.yaml
+kubectl get pods,svc
+kubectl port-forward svc/ascii-artify 8081:80 &
+```
+
+#### Перевірка:
+```bash
+curl localhost:8081
+kubectl logs $(kubectl get pods -l app=ascii-artify -o name)
+```
+
+#### Видалити:
+```bash
+minikube delete
+```
+
+### 2. Kind
+
+#### Встановлення:
+```bash
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
+chmod +x kind && sudo mv kind /usr/local/bin
+kind create cluster --name asciiartify
+```
+
+#### Деплой:
+```bash
+kubectl apply -f ascii-artify.yaml
+kubectl get pods,svc
+kubectl port-forward svc/ascii-artify 8081:80 &
+```
+
+#### Перевірка:
+```bash
+curl localhost:8081
+kubectl logs $(kubectl get pods -l app=ascii-artify -o name)
+```
+
+#### Видалити:
+```bash
+kind delete cluster --name asciiartify
+```
+
+### 2. k3d
+
+#### Встановлення:
+```bash
+curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+k3d cluster create k3d-asciiartify
+```
+
+#### Деплой:
+```bash
+kubectl apply -f ascii-artify.yaml
+kubectl get pods,svc
+kubectl port-forward svc/ascii-artify 8081:80 &
+```
+
+#### Перевірка:
+```bash
+curl localhost:8081
+kubectl logs $(kubectl get pods -l app=ascii-artify -o name)
+```
+
+#### Видалити:
+```bash
+k3d cluster delete k3d-asciiartify
+```
