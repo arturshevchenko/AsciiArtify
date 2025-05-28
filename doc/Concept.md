@@ -108,7 +108,7 @@ kubectl get services
 
 ---
 
-Демо: ![Image](../demo.gif)
+Демо: ![Image](demo.gif)
 
 https://github.com/arturshevchenko/AsciiArtify
 
@@ -121,3 +121,90 @@ https://minikube.sigs.k8s.io/docs/
 https://kind.sigs.k8s.io/
 
 https://k3d.io/stable/
+
+
+---
+
+## Практичний гайд: Як розгорнути демо "Hello from Ascii" у кожному кластері
+
+> **Файл для розгортання:** [ascii-artify.yaml](./ascii-artify.yaml)  
+> Примітка: yaml використовує простий імейдж, який повертає відповідь `Hello from ascii`.
+
+### 1. Minikube
+
+#### Встановлення:
+```bash
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube && sudo mv minikube /usr/local/bin
+minikube start
+```
+#### Деплой:
+```bash
+kubectl apply -f ascii-artify.yaml
+kubectl get pods,svc
+kubectl port-forward svc/ascii-artify 8081:80 &
+```
+
+#### Перевірка:
+```bash
+curl localhost:8081
+kubectl logs $(kubectl get pods -l app=ascii-artify -o name)
+```
+
+#### Видалити:
+```bash
+minikube delete
+```
+
+### 2. Kind
+
+#### Встановлення:
+```bash
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
+chmod +x kind && sudo mv kind /usr/local/bin
+kind create cluster --name asciiartify
+```
+
+#### Деплой:
+```bash
+kubectl apply -f ascii-artify.yaml
+kubectl get pods,svc
+kubectl port-forward svc/ascii-artify 8081:80 &
+```
+
+#### Перевірка:
+```bash
+curl localhost:8081
+kubectl logs $(kubectl get pods -l app=ascii-artify -o name)
+```
+
+#### Видалити:
+```bash
+kind delete cluster --name asciiartify
+```
+
+### 2. k3d
+
+#### Встановлення:
+```bash
+curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+k3d cluster create k3d-asciiartify
+```
+
+#### Деплой:
+```bash
+kubectl apply -f ascii-artify.yaml
+kubectl get pods,svc
+kubectl port-forward svc/ascii-artify 8081:80 &
+```
+
+#### Перевірка:
+```bash
+curl localhost:8081
+kubectl logs $(kubectl get pods -l app=ascii-artify -o name)
+```
+
+#### Видалити:
+```bash
+k3d cluster delete k3d-asciiartify
+```
