@@ -114,6 +114,18 @@ kubectl get services
 
 Демо: ![Image](demo.gif)
 
+## Додаткові посилання
+
+* [Офіційна документація Minikube](https://minikube.sigs.k8s.io/)
+* [Офіційна документація kind](https://kind.sigs.k8s.io/)
+* [Офіційна документація k3d](https://k3d.io/)
+* [Podman vs Docker](https://podman.io/)
+* [AsciiArtify GitHub репозиторій](https://github.com/smaystr/AsciiArtify)
+
+---
+
+*Всі коди та YAML-файли можна знайти у репозиторії AsciiArtify у папці `/demo`.*
+
 https://github.com/arturshevchenko/AsciiArtify
 
 https://argo-cd.readthedocs.io/en/stable/
